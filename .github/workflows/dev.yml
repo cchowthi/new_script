@@ -1,0 +1,42 @@
+name: CI - Run tests on updated script
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  validate:
+    if: github.repository != 'cchowthi/gilead_script_template'
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        # Run in all these versions of Python
+        python-version: [3.6, 3.8, 3.9]
+        
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: dev
+          
+      - name: Get requirements
+        uses: actions/checkout@v2
+        with:
+          repository: cchowthi/m-mkvenv
+          token: ${{ secrets.global_pat }}
+          path: m-mkvenv
+      
+      - name: Set Up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Install dependencies
+        run: |
+          cp m-mkvenv/gpythonvenv_requirements.txt dev/
+          python -m pip install --upgrade pip
+          pip install -r dev/gpythonvenv_requirements.txt
+          
+      - name: Run tests with pytest
+        run: |
+          cd dev/qualification/test_scripts
+          pytest 
